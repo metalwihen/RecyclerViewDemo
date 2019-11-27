@@ -21,9 +21,9 @@ public class SwipeAndDragHelper extends ItemTouchHelper.Callback {
         if (viewHolder instanceof SectionHeaderViewHolder) {
             return 0;
         }
-        int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
-        int swipeFlags = ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
-        return makeMovementFlags(dragFlags, swipeFlags);
+
+        int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
+        return makeMovementFlags(dragFlags, 0);
     }
 
     @Override
@@ -34,7 +34,6 @@ public class SwipeAndDragHelper extends ItemTouchHelper.Callback {
 
     @Override
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-        contract.onViewSwiped(viewHolder.getAdapterPosition());
     }
 
     @Override
@@ -50,17 +49,11 @@ public class SwipeAndDragHelper extends ItemTouchHelper.Callback {
                             float dY,
                             int actionState,
                             boolean isCurrentlyActive) {
-        if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-            float alpha = 1 - (Math.abs(dX) / recyclerView.getWidth());
-            viewHolder.itemView.setAlpha(alpha);
-        }
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
     }
 
     public interface ActionCompletionContract {
         void onViewMoved(int oldPosition, int newPosition);
-
-        void onViewSwiped(int position);
     }
 
 }

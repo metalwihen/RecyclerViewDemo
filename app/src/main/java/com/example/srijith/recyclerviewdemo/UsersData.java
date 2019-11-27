@@ -1,5 +1,11 @@
 package com.example.srijith.recyclerviewdemo;
 
+import com.example.srijith.recyclerviewdemo.type.HeaderFavourite;
+import com.example.srijith.recyclerviewdemo.type.HeaderOthers;
+import com.example.srijith.recyclerviewdemo.type.Placeholder;
+import com.example.srijith.recyclerviewdemo.type.ReorderItem;
+import com.example.srijith.recyclerviewdemo.type.User;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,35 +15,34 @@ import java.util.List;
 
 public class UsersData {
 
-    private List<User> usersList = new ArrayList<User>() {
+    private List<ReorderItem> usersList = new ArrayList<ReorderItem>() {
         {
-            add(new User(0, "", "", "Developers"));
-            add(new User(1, "Frederick Hoffman", "https://randomuser.me/api/portraits/men/52.jpg", "Developers"));
-            add(new User(2, "Calvin Young", "https://randomuser.me/api/portraits/men/78.jpg", "Developers"));
-            add(new User(3, "Jeanette Reid", "https://randomuser.me/api/portraits/women/37.jpg", "Developers"));
-            add(new User(4, "Flenn Wilson", "https://randomuser.me/api/portraits/men/40.jpg", "Developers"));
-            add(new User(5, "Martin Holland", "https://randomuser.me/api/portraits/men/0.jpg", "Developers"));
-            add(new User(6, "", "", "Designers"));
-            add(new User(7, "Jeanette Simmmons", "https://randomuser.me/api/portraits/women/3.jpg", "Designers"));
-            add(new User(8, "Wallace Lambert", "https://randomuser.me/api/portraits/men/53.jpg", "Designers"));
-            add(new User(9, "Andy Clark", "https://randomuser.me/api/portraits/men/68.jpg", "Designers"));
-            add(new User(10, "olivia obrien", "https://randomuser.me/api/portraits/women/93.jpg", "Designers"));
-            add(new User(11, "Debbie Bennett", "https://randomuser.me/api/portraits/women/34.jpg", "Designers"));
-            add(new User(12, "", "", "Team Leads"));
-            add(new User(13, "Bernice Lawson", "https://randomuser.me/api/portraits/women/20.jpg", "Team Leads"));
-            add(new User(14, "Camila Elliott", "https://randomuser.me/api/portraits/women/60.jpg", "Team Leads"));
-            add(new User(15, "Gerald Webb", "https://randomuser.me/api/portraits/men/55.jpg", "Team Leads"));
-            add(new User(16, "Russell Hart", "https://randomuser.me/api/portraits/men/18.jpg", "Team Leads"));
-            add(new User(17, "Joyce Mccoy", "https://randomuser.me/api/portraits/women/82.jpg", "Team Leads"));
-            add(new User(18, "", "", "Team Managers"));
-            add(new User(19, "Daryl Banks", "https://randomuser.me/api/portraits/men/4.jpg", "Team Managers"));
-            add(new User(20, "Veronica Vargas", "https://randomuser.me/api/portraits/women/14.jpg", "Team Managers"));
-            add(new User(21, "Natalie Jacobs", "https://randomuser.me/api/portraits/women/0.jpg", "Team Managers"));
-            add(new User(22, "Beverly Kennedy", "https://randomuser.me/api/portraits/women/30.jpg", "Team Managers"));
+            add(new HeaderFavourite());
+            add(new User("Frederick Hoffman", "https://randomuser.me/api/portraits/men/52.jpg"));
+            add(new User("Calvin Young", "https://randomuser.me/api/portraits/men/78.jpg"));
+            add(new User("Jeanette Reid", "https://randomuser.me/api/portraits/women/37.jpg"));
+            add(new User("Flenn Wilson", "https://randomuser.me/api/portraits/men/40.jpg"));
+//            add(new Placeholder());
+            add(new HeaderOthers());
+            add(new User("Jeanette Simmmons", "https://randomuser.me/api/portraits/women/3.jpg"));
+            add(new User("Wallace Lambert", "https://randomuser.me/api/portraits/men/53.jpg"));
+            add(new User("Andy Clark", "https://randomuser.me/api/portraits/men/68.jpg"));
+            add(new User("olivia obrien", "https://randomuser.me/api/portraits/women/92.jpg"));
+            add(new User("Debbie Bennett", "https://randomuser.me/api/portraits/women/34.jpg"));
+            add(new User("Jimmy Spoon", "https://randomuser.me/api/portraits/women/93.jpg"));
+            add(new User("Bernice Lawson", "https://randomuser.me/api/portraits/women/20.jpg"));
+            add(new User("Camila Elliott", "https://randomuser.me/api/portraits/women/60.jpg"));
+            add(new User("Gerald Webb", "https://randomuser.me/api/portraits/men/55.jpg"));
+            add(new User("Russell Hart", "https://randomuser.me/api/portraits/men/18.jpg"));
+            add(new User("Joyce Mccoy", "https://randomuser.me/api/portraits/women/82.jpg"));
+            add(new User("Daryl Banks", "https://randomuser.me/api/portraits/men/4.jpg"));
+            add(new User("Veronica Vargas", "https://randomuser.me/api/portraits/women/14.jpg"));
+            add(new User("Natalie Jacobs", "https://randomuser.me/api/portraits/women/0.jpg"));
+            add(new User("Beverly Kennedy", "https://randomuser.me/api/portraits/women/30.jpg"));
         }
     };
 
-    public List<User> getUsersList() {
+    public List<ReorderItem> getUsersList() {
         return usersList;
     }
 }
