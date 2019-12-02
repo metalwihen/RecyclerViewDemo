@@ -1,43 +1,42 @@
 package com.example.srijith.recyclerviewdemo.helpers
 
-import android.util.Log
 import com.example.srijith.recyclerviewdemo.type.ButtonType
 import com.example.srijith.recyclerviewdemo.type.ImageItem
+import com.example.srijith.recyclerviewdemo.type.Placeholder
 import com.example.srijith.recyclerviewdemo.type.ReorderItem
 
-class ReorderItemHelper(private val list: MutableList<ReorderItem>) {
+class ReorderItemHelper(private val list: MutableList<ReorderItem>, val maxFavourites: Int, val usePlaceholders: Boolean = true) {
 
-    companion object {
-        const val MAX_FAVOURITES = 6
-    }
+    private val positionOfHeaderFav = 0
 
-    val positionOfHeaderFav = 0
-
-    var positionOfHeaderOther = -1
-        private set
+    private var positionOfHeaderOther = -1
 
     var countOfFavouriteItems = 0
         private set
 
     fun init(callback: AdapterCallback) {
-        identifyPositionsAndCount()
-        updateItemButtonState(callback)
+        updateViewIfChanged(callback)
     }
 
     fun handleItemButtonAction(position: Int, callback: AdapterCallback) {
-        identifyPositionsAndCount()
+        if (usePlaceholders) {
+            removeAllPlaceholders(callback)
+        }
 
         val item = list[position] as ImageItem
-
         val hasMinOneBadge = countOfFavouriteItems > 1
         if (hasMinOneBadge && item.buttonType == ButtonType.REMOVE) {
             moveItem(position, positionOfHeaderOther, callback)
         } else if (!isFavouriteSectionFull() && item.buttonType == ButtonType.ADD) {
-            moveItem(position, positionOfHeaderOther, callback)
+            moveItem(position, positionOfHeaderFav + countOfFavouriteItems + 1, callback)
         } else if (isFavouriteSectionFull() && item.buttonType == ButtonType.ADD) {
-            moveItem(positionOfHeaderFav + 1, position - 1, callback)
-            moveItem(position, positionOfHeaderOther, callback)
+            moveItem(positionOfHeaderFav + 1, position, callback)
+            moveItem(position - 1, positionOfHeaderOther - 1, callback)
+        } else {
+            return
         }
+
+        updateViewIfChanged(callback)
     }
 
     fun isDragAllowed(pos: Int): Boolean {
@@ -46,23 +45,29 @@ class ReorderItemHelper(private val list: MutableList<ReorderItem>) {
 
     fun onDragView(oldPosition: Int, newPosition: Int, callback: AdapterCallback) {
         val isDraggedAboveHeaderFav = newPosition <= positionOfHeaderFav
-        val isDraggedBeyondHeaderOther = newPosition >= positionOfHeaderOther
-        if (isDraggedAboveHeaderFav || isDraggedBeyondHeaderOther) {
+        val isDraggedBeyondLastFavouriteItem = newPosition > positionOfHeaderFav + countOfFavouriteItems
+        if (isDraggedAboveHeaderFav || isDraggedBeyondLastFavouriteItem) {
             return
         }
 
         if (list[oldPosition].type == ReorderItem.Type.ITEM.id) {
             moveItem(oldPosition, newPosition, callback)
+            updateViewIfChanged(callback)
         }
     }
 
     private fun identifyPositionsAndCount() {
         var positionHeaderOther = 0
         var countItemsInFavSection = 0
+        var countOfPlaceholders = 0
 
         for (position in 0 until list.size) {
             if (list[position].type == ReorderItem.Type.ITEM.id) {
                 countItemsInFavSection++
+            }
+
+            if (list[position].type == ReorderItem.Type.PLACEHOLDER.id) {
+                countOfPlaceholders++
             }
 
             if (list[position].type == ReorderItem.Type.OTHER_HEADER.id) {
@@ -81,17 +86,17 @@ class ReorderItemHelper(private val list: MutableList<ReorderItem>) {
             if (list[pos].type == ReorderItem.Type.ITEM.id) {
                 val item = list[pos] as ImageItem
                 if (isFavSectionAlmostEmpty && isFavourite(pos)) {
-                    isChanged(pos, item.buttonType, ButtonType.HIDDEN, {
+                    isChanged(item.buttonType, ButtonType.HIDDEN, {
                         item.buttonType = ButtonType.HIDDEN
                         callback.onItemChanged(pos)
                     })
                 } else if (!isFavSectionAlmostEmpty && isFavourite(pos)) {
-                    isChanged(pos, item.buttonType, ButtonType.REMOVE, {
+                    isChanged(item.buttonType, ButtonType.REMOVE, {
                         item.buttonType = ButtonType.REMOVE
                         callback.onItemChanged(pos)
                     })
                 } else {
-                    isChanged(pos, item.buttonType, ButtonType.ADD, {
+                    isChanged(item.buttonType, ButtonType.ADD, {
                         item.buttonType = ButtonType.ADD
                         callback.onItemChanged(pos)
                     })
@@ -100,63 +105,81 @@ class ReorderItemHelper(private val list: MutableList<ReorderItem>) {
         }
     }
 
+    private fun updateViewIfChanged(callback: AdapterCallback) {
+        val originalCountFav = countOfFavouriteItems
+        identifyPositionsAndCount()
+        updateItemButtonState(callback)
+
+        if (usePlaceholders) {
+            isChanged(originalCountFav, countOfFavouriteItems) {
+                configurePlaceholders(callback)
+            }
+        }
+
+    }
+
+
     private fun moveItem(oldPosition: Int, newPosition: Int, callback: AdapterCallback) {
         val targetUser = list.removeAt(oldPosition)
         list.add(newPosition, targetUser)
-
-        identifyPositionsAndCount()
-
         callback.onItemMoved(oldPosition, newPosition)
-        updateItemButtonState(callback)
     }
 
-    private fun <T> isChanged(pos: Int, originalValue: T, newValue: T, callback: () -> Unit) {
+    private fun <T> isChanged(originalValue: T, newValue: T, callback: () -> Unit) {
         if (originalValue != newValue) {
             callback.invoke()
         }
     }
 
     private fun isFavouriteSectionFull(): Boolean {
-        return countOfFavouriteItems >= MAX_FAVOURITES
+        return countOfFavouriteItems >= maxFavourites
     }
 
     private fun isFavourite(pos: Int): Boolean {
-        return pos in (positionOfHeaderFav + 1) until positionOfHeaderOther
+        val start = positionOfHeaderFav + 1
+        return pos in start until start + countOfFavouriteItems
     }
 
-//    private fun addPlaceholders() {
-//        val posHeaderFav = badgeListOrganizer.positionOfHeaderFav
-//        val countFav = badgeListOrganizer.countOfFavouriteItems
-//
-//        val openSlots = MAX_FAVOURITES - countFav
-//        if (openSlots > 0) {
-//            for (i in 1..openSlots) {
-//                finalList.add(posHeaderFav + countFav + i, Placeholder())
-//            }
-//
-//            notifyItemRangeChanged(0, MAX_FAVOURITES)
-//        }
-//    }
-//
-//    private fun removePlaceholders() {
-//        val itemsToRemove = HashSet<Int>()
-//        for (i in finalList.indices) {
-//            if (finalList[i].type == ReorderItem.Type.PLACEHOLDER.id) {
-//                itemsToRemove.add(i)
-//            }
-//        }
-//
-//        if (itemsToRemove.size > 0) {
-//            for (position in itemsToRemove) {
-//                finalList.removeAt(position)
-//            }
-//            notifyItemRangeChanged(0, MAX_FAVOURITES)
-//        }
-//    }
+    private fun configurePlaceholders(callback: AdapterCallback) {
+        removeAllPlaceholders(callback)
+        addPlaceholders(callback)
+    }
+
+    private fun addPlaceholders(callback: AdapterCallback) {
+        val openSlots = maxFavourites - countOfFavouriteItems
+        for (i in 1..openSlots) {
+            val insertPosition = positionOfHeaderFav + countOfFavouriteItems + 1
+            list.add(insertPosition, Placeholder())
+            callback.onItemInserted(insertPosition)
+
+            positionOfHeaderOther++
+        }
+    }
+
+    private fun removeAllPlaceholders(callback: AdapterCallback) {
+        val set = HashSet<ReorderItem>()
+        for (item in list) {
+            if (item is Placeholder) {
+                set.add(item)
+            }
+        }
+
+        if (set.size != 0) {
+            positionOfHeaderOther -= set.size
+
+            for (item in set) {
+                val pos: Int = list.indexOf(item)
+                list.remove(item)
+                callback.onItemRemoved(pos)
+            }
+        }
+    }
 
     interface AdapterCallback {
         fun onItemMoved(oldPos: Int, newPos: Int)
         fun onItemChanged(pos: Int)
+        fun onItemInserted(pos: Int)
+        fun onItemRemoved(pos: Int)
     }
 
 }

@@ -94,6 +94,14 @@ class ReorderItemListAdapter(
         notifyItemChanged(pos)
     }
 
+    override fun onItemInserted(pos: Int) {
+        notifyItemInserted(pos)
+    }
+
+    override fun onItemRemoved(pos: Int) {
+        notifyItemRangeRemoved(pos, 1)
+    }
+
     fun setTouchHelper(touchHelper: ItemTouchHelper) {
         this.touchHelper = touchHelper
     }

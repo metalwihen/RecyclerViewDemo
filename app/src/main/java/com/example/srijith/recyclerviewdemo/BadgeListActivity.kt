@@ -20,7 +20,7 @@ class BadgeListActivity : AppCompatActivity() {
         val dataRepo = DataRepo()
         val usersList = dataRepo.usersList
 
-        val adapter = ReorderItemListAdapter(usersList, ReorderItemHelper(usersList))
+        val adapter = ReorderItemListAdapter(usersList, ReorderItemHelper(usersList, 6, true))
 
         val layoutManager = GridLayoutManager(this, 3)
         layoutManager.spanSizeLookup = adapter.getSpanSize(layoutManager)

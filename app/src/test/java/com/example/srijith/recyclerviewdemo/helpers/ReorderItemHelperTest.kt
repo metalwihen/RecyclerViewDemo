@@ -1,13 +1,15 @@
 package com.example.srijith.recyclerviewdemo.helpers
 
 import com.example.srijith.recyclerviewdemo.type.*
-import org.junit.Test
-
 import org.junit.Assert.*
+import org.junit.Test
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
-import java.util.ArrayList
+import java.util.*
 
 class ReorderItemHelperTest {
+
+    val MAX_FAVOURITE = 6
 
     private val sampleList: MutableList<ReorderItem> = object : ArrayList<ReorderItem>() {
         init {
@@ -59,21 +61,9 @@ class ReorderItemHelperTest {
         }
     }
 
-
-    @Test
-    fun `should identify position of Headers`() {
-        val positionTracker = ReorderItemHelper(sampleList)
-        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
-
-        positionTracker.init(callback)
-
-        assertEquals(0, positionTracker.positionOfHeaderFav)
-        assertEquals(5, positionTracker.positionOfHeaderOther)
-    }
-
     @Test
     fun `should count items in Favourite section`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
 
         positionTracker.init(callback)
@@ -91,7 +81,7 @@ class ReorderItemHelperTest {
                 add(ImageItem("Wallace Lambert", "https://randomuser.me/api/portraits/men/53.jpg", ButtonType.ADD))
             }
         }
-        val positionTracker = ReorderItemHelper(list)
+        val positionTracker = ReorderItemHelper(list, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
 
         positionTracker.init(callback)
@@ -108,7 +98,7 @@ class ReorderItemHelperTest {
                 add(HeaderOthers())
             }
         }
-        val positionTracker = ReorderItemHelper(list)
+        val positionTracker = ReorderItemHelper(list, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
 
         positionTracker.init(callback)
@@ -118,19 +108,18 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should update item position to favourite section if add button clicked`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
         positionTracker.handleItemButtonAction(8, callback)
 
         assertEquals(5, positionTracker.countOfFavouriteItems)
-        assertEquals(6, positionTracker.positionOfHeaderOther)
     }
 
     @Test
     fun `should update item view if add button clicked`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
 
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
@@ -143,44 +132,32 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should update item position from favourite section if remove button clicked`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
 
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.handleItemButtonAction(2, callback)
 
         assertEquals(3, positionTracker.countOfFavouriteItems)
-        assertEquals(4, positionTracker.positionOfHeaderOther)
     }
 
     @Test
     fun `should update item view if remove button clicked`() {
-        val positionTracker = ReorderItemHelper(sampleList)
-        positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
-
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, false)
+        val callbackInit = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callbackInit)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+
         positionTracker.handleItemButtonAction(2, callback)
 
         verify(callback).onItemMoved(2, 5)
         verify(callback).onItemChanged(5)
     }
 
-    @Test
-    fun `should do nothing if only one item in favourite section and remove button clicked`() {
-        val positionTracker = ReorderItemHelper(almostEmptyFavouriteList)
-        positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
-
-        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
-        positionTracker.handleItemButtonAction(1, callback)
-        positionTracker.handleItemButtonAction(1, callback)
-
-        assertEquals(1, positionTracker.countOfFavouriteItems)
-        assertEquals(2, positionTracker.positionOfHeaderOther)
-    }
 
     @Test
     fun `should hide button of item view if last item in favourite section`() {
-        val positionTracker = ReorderItemHelper(almostEmptyFavouriteList)
+        val positionTracker = ReorderItemHelper(almostEmptyFavouriteList, MAX_FAVOURITE, false)
 
         positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
 
@@ -192,7 +169,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should hide button of item view if last item in favourite section after button clicks`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, false)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalFavCount = positionTracker.countOfFavouriteItems
@@ -201,64 +178,62 @@ class ReorderItemHelperTest {
         positionTracker.handleItemButtonAction(1, callback)
         positionTracker.handleItemButtonAction(1, callback)
 
-        assertNotEquals(1, originalFavCount)
+        assertEquals(4, originalFavCount)
         assertEquals(1, positionTracker.countOfFavouriteItems)
+
+        assertEquals("Flenn Wilson", (sampleList[1] as ImageItem).name)
         assertEquals(ButtonType.HIDDEN, (sampleList[1] as ImageItem).buttonType)
-        assertEquals(ButtonType.ADD, (sampleList[3] as ImageItem).buttonType)
-        assertEquals(ButtonType.ADD, (sampleList[4] as ImageItem).buttonType)
     }
 
 
     @Test
     fun `should show minus button for item in favourite section and plus button in other section`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
 
         positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
 
         assertEquals(ButtonType.REMOVE, (sampleList[1] as ImageItem).buttonType)
         assertEquals(ButtonType.REMOVE, (sampleList[2] as ImageItem).buttonType)
         assertEquals(ButtonType.REMOVE, (sampleList[4] as ImageItem).buttonType)
-        assertEquals(ButtonType.ADD, (sampleList[6] as ImageItem).buttonType)
         assertEquals(ButtonType.ADD, (sampleList[12] as ImageItem).buttonType)
         assertEquals(ButtonType.ADD, (sampleList[20] as ImageItem).buttonType)
     }
 
     @Test
     fun `should show minus button for item in favourite section and plus button in other section even after button action`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
         positionTracker.handleItemButtonAction(2, callback) // remove
-        positionTracker.handleItemButtonAction(8, callback) // add
+        positionTracker.handleItemButtonAction(12, callback) // add
 
         assertEquals(ButtonType.REMOVE, (sampleList[1] as ImageItem).buttonType)
         assertEquals(ButtonType.REMOVE, (sampleList[2] as ImageItem).buttonType)
         assertEquals(ButtonType.REMOVE, (sampleList[3] as ImageItem).buttonType)
-        assertEquals(ButtonType.ADD, (sampleList[6] as ImageItem).buttonType)
+        assertEquals(ButtonType.ADD, (sampleList[10] as ImageItem).buttonType)
         assertEquals(ButtonType.ADD, (sampleList[12] as ImageItem).buttonType)
         assertEquals(ButtonType.ADD, (sampleList[19] as ImageItem).buttonType)
     }
 
     @Test
     fun `should ensure favourite item count does not cross max limit when button clicked to add items`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         val originalFavouriteCount = positionTracker.countOfFavouriteItems
 
-        positionTracker.handleItemButtonAction(8, callback) // add
-        positionTracker.handleItemButtonAction(8, callback) // add
-        positionTracker.handleItemButtonAction(10, callback) // add
+        positionTracker.handleItemButtonAction(12, callback) // add
+        positionTracker.handleItemButtonAction(12, callback) // add
+        positionTracker.handleItemButtonAction(12, callback) // add
 
         assertEquals(4, originalFavouriteCount)
-        assertEquals(6, ReorderItemHelper.MAX_FAVOURITES) // Update test if MAX_FAVOURITES is changed
-        assertEquals(ReorderItemHelper.MAX_FAVOURITES, positionTracker.countOfFavouriteItems)
+        assertEquals(MAX_FAVOURITE, positionTracker.countOfFavouriteItems)
     }
 
     @Test
     fun `should ensure favourite items change order but not cross max limit when button clicked to add items`() {
-        val positionTracker = ReorderItemHelper(fullFavouriteList)
+        val positionTracker = ReorderItemHelper(fullFavouriteList, MAX_FAVOURITE, true)
         positionTracker.init(mock(ReorderItemHelper.AdapterCallback::class.java))
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         val originalFavouriteCount = positionTracker.countOfFavouriteItems
@@ -266,7 +241,6 @@ class ReorderItemHelperTest {
 
         positionTracker.handleItemButtonAction(8, callback) // add
 
-        assertEquals(6, ReorderItemHelper.MAX_FAVOURITES) // Update test if MAX_FAVOURITES is changed
         assertEquals(6, originalFavouriteCount)
         assertEquals(6, positionTracker.countOfFavouriteItems)
         assertNotEquals(originalFirstItem, fullFavouriteList[1])
@@ -277,7 +251,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should update favourite count after button click to remove item`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalFavCount = positionTracker.countOfFavouriteItems
@@ -290,7 +264,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should update favourite count after button click to add item`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalFavCount = positionTracker.countOfFavouriteItems
@@ -303,7 +277,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should update favourite count after random button click to add and remove item`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalFavCount = positionTracker.countOfFavouriteItems
@@ -320,7 +294,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should allow drag to reorder for only items in favourite section`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
@@ -331,7 +305,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should not allow drag to reorder for items not in favourite section`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
@@ -341,8 +315,8 @@ class ReorderItemHelperTest {
     }
 
     @Test
-    fun `should not allow drag to reorder for list elements whose type is not ITEM`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+    fun `should not allow drag to reorder for list elements whose type is header`() {
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, false)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
@@ -354,8 +328,19 @@ class ReorderItemHelperTest {
     }
 
     @Test
+    fun `should not allow drag to reorder for list elements whose type is placeholder`() {
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callback)
+
+        val isDragAllowedForPlaceholder = positionTracker.isDragAllowed(5)
+
+        assertFalse(isDragAllowedForPlaceholder)
+    }
+
+    @Test
     fun `should change order if item views dragged within favourite section`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalItemAtPosition = sampleList[1]
@@ -368,7 +353,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should change order if item views dragged within favourite section and when count of favourite is max`() {
-        val positionTracker = ReorderItemHelper(fullFavouriteList)
+        val positionTracker = ReorderItemHelper(fullFavouriteList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalItemAtPosition = fullFavouriteList[2]
@@ -381,7 +366,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should not change order if item views dragged above header Favourites`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalItemAtPosition = sampleList[1]
@@ -394,7 +379,7 @@ class ReorderItemHelperTest {
 
     @Test
     fun `should not change order if item views dragged below header Others`() {
-        val positionTracker = ReorderItemHelper(sampleList)
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
         val originalItemAtPosition = sampleList[1]
@@ -404,4 +389,67 @@ class ReorderItemHelperTest {
         assertEquals(originalItemAtPosition, sampleList[1])
         verify(callback, never()).onItemMoved(1, 8)
     }
+
+    @Test
+    fun `should not change order if item views dragged beyond last favourite item`() {
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callback)
+        val originalItemAtPosition = sampleList[1]
+
+        positionTracker.onDragView(1, 5, callback)
+
+        assertEquals(originalItemAtPosition, sampleList[1])
+        verify(callback, never()).onItemMoved(1, 5)
+    }
+
+
+    @Test
+    fun `should add placeholders when favourite items less than the max limit`() {
+        val positionTracker = ReorderItemHelper(almostEmptyFavouriteList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+
+        positionTracker.init(callback)
+        assertTrue(almostEmptyFavouriteList[2] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[3] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[4] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[5] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[6] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[7] is HeaderOthers)
+    }
+
+    @Test
+    fun `should remove placeholders when items added to favourites`() {
+        val positionTracker = ReorderItemHelper(almostEmptyFavouriteList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callback)
+
+        positionTracker.handleItemButtonAction(4, callback)
+
+        assertTrue(almostEmptyFavouriteList[2] is ImageItem)
+        assertTrue(almostEmptyFavouriteList[3] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[4] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[5] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[6] is Placeholder)
+        assertTrue(almostEmptyFavouriteList[7] is HeaderOthers)
+    }
+
+    @Test
+    fun `should add placeholders when items removed from favourites`() {
+        val positionTracker = ReorderItemHelper(fullFavouriteList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callback)
+
+        positionTracker.handleItemButtonAction(1, callback)
+        positionTracker.handleItemButtonAction(2, callback)
+        positionTracker.handleItemButtonAction(3, callback)
+        positionTracker.handleItemButtonAction(1, callback)
+
+        assertTrue(fullFavouriteList[2] is ImageItem)
+        assertTrue(fullFavouriteList[3] is Placeholder)
+        assertTrue(fullFavouriteList[4] is Placeholder)
+        assertTrue(fullFavouriteList[5] is Placeholder)
+        assertTrue(fullFavouriteList[7] is HeaderOthers)
+    }
+
 }
