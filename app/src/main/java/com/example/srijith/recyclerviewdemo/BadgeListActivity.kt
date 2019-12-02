@@ -35,7 +35,6 @@ class BadgeListActivity : AppCompatActivity() {
     }
 
     companion object {
-
         private val TAG = "BadgeListActivity"
     }
 

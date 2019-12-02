@@ -11,14 +11,13 @@ import com.example.srijith.recyclerviewdemo.type.*
 
 class ReorderItemListAdapter(
         private val finalList: MutableList<ReorderItem>,
-        private val badgeListOrganizer: ReorderItemHelper) :
+        private val organizer: ReorderItemHelper) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>(), SwipeAndDragHelper.ActionCompletionContract, ReorderItemHelper.AdapterCallback {
 
     private lateinit var touchHelper: ItemTouchHelper
 
     init {
-        badgeListOrganizer.identifyPositionsAndCount()
-        badgeListOrganizer.updateItemButtonState(this)
+        organizer.init(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -37,7 +36,9 @@ class ReorderItemListAdapter(
                 val holder = ImageItemViewHolder(
                         layoutInflater
                                 .inflate(R.layout.layout_user_list_item, parent, false))
-                holder.setButtonClickListener { badgeListOrganizer.handleItemButtonAction(holder.adapterPosition, this) }
+                holder.setButtonClickListener {
+                    organizer.handleItemButtonAction(holder.adapterPosition, this)
+                }
                 holder.itemView.setOnTouchListener { view, motionEvent ->
                     if (isDragAllowed(holder)) {
                         touchHelper.startDrag(holder)
@@ -78,11 +79,11 @@ class ReorderItemListAdapter(
     }
 
     private fun isDragAllowed(viewHolder: RecyclerView.ViewHolder): Boolean {
-        return badgeListOrganizer.isDragAllowed(viewHolder.adapterPosition)
+        return organizer.isDragAllowed(viewHolder.adapterPosition)
     }
 
     override fun onViewMoved(oldPosition: Int, newPosition: Int) {
-        badgeListOrganizer.onDragView(oldPosition, newPosition, this)
+        organizer.onDragView(oldPosition, newPosition, this)
     }
 
     override fun onItemMoved(oldPos: Int, newPos: Int) {
