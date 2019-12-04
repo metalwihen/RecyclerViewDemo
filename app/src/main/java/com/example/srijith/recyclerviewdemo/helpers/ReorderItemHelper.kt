@@ -18,20 +18,18 @@ class ReorderItemHelper(private val list: MutableList<ReorderItem>, val maxFavou
         updateViewIfChanged(callback)
     }
 
-    fun handleItemButtonAction(position: Int, callback: AdapterCallback) {
-        if (usePlaceholders) {
-            removeAllPlaceholders(callback)
-        }
+    fun handleItemButtonAction(itemPosition: Int, callback: AdapterCallback) {
+        identifyPositionsAndCount()
 
-        val item = list[position] as ImageItem
+        val item = list[itemPosition] as ImageItem
         val hasMinOneBadge = countOfFavouriteItems > 1
         if (hasMinOneBadge && item.buttonType == ButtonType.REMOVE) {
-            moveItem(position, positionOfHeaderOther, callback)
+            moveItem(itemPosition, positionOfHeaderOther, callback)
         } else if (!isFavouriteSectionFull() && item.buttonType == ButtonType.ADD) {
-            moveItem(position, positionOfHeaderFav + countOfFavouriteItems + 1, callback)
+            moveItem(itemPosition, positionOfHeaderFav + countOfFavouriteItems + 1, callback)
         } else if (isFavouriteSectionFull() && item.buttonType == ButtonType.ADD) {
-            moveItem(positionOfHeaderFav + 1, position, callback)
-            moveItem(position - 1, positionOfHeaderOther - 1, callback)
+            moveItem(positionOfHeaderFav + 1, itemPosition, callback)
+            moveItem(itemPosition - 1, positionOfHeaderOther - 1, callback)
         } else {
             return
         }

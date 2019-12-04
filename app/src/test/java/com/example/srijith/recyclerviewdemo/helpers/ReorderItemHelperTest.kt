@@ -107,14 +107,72 @@ class ReorderItemHelperTest {
     }
 
     @Test
-    fun `should update item position to favourite section if add button clicked`() {
+    fun `should add item to favourite section if add button clicked`() {
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callback)
+        val countOfFavourite = positionTracker.countOfFavouriteItems
+
+        positionTracker.handleItemButtonAction(8, callback)
+
+        val newCountOfFavourite = positionTracker.countOfFavouriteItems
+        assertEquals(1 + countOfFavourite, newCountOfFavourite)
+        assertEquals(5, newCountOfFavourite)
+    }
+
+    @Test
+    fun `should add the same item to favourite section if item's add button clicked`() {
         val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
-        positionTracker.handleItemButtonAction(8, callback)
+        val positionOfItemToAdd = 10
 
-        assertEquals(5, positionTracker.countOfFavouriteItems)
+        // BEFORE: list with placeholders
+        assertEquals("Frederick Hoffman", (sampleList[1] as ImageItem).name)
+        assertEquals("Calvin Young", (sampleList[2] as ImageItem).name)
+        assertEquals("Jeanette Reid", (sampleList[3] as ImageItem).name)
+        assertEquals("Flenn Wilson", (sampleList[4] as ImageItem).name)
+        assert(sampleList[5] is Placeholder)
+        assert(sampleList[6] is Placeholder)
+        assertEquals("Andy Clark", (sampleList[10] as ImageItem).name)
+
+        positionTracker.handleItemButtonAction(positionOfItemToAdd, callback)
+
+        // AFTER
+        assertEquals("Frederick Hoffman", (sampleList[1] as ImageItem).name)
+        assertEquals("Calvin Young", (sampleList[2] as ImageItem).name)
+        assertEquals("Jeanette Reid", (sampleList[3] as ImageItem).name)
+        assertEquals("Flenn Wilson", (sampleList[4] as ImageItem).name)
+        assertEquals("Andy Clark", (sampleList[5] as ImageItem).name)
+        assert(sampleList[6] is Placeholder)
+    }
+
+    @Test
+    fun `should remove the same item from favourite section if item's add button clicked`() {
+        val positionTracker = ReorderItemHelper(sampleList, MAX_FAVOURITE, true)
+        val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
+        positionTracker.init(callback)
+
+        val positionOfItemToRemove = 3
+
+        // BEFORE: list with placeholders
+        assertEquals("Frederick Hoffman", (sampleList[1] as ImageItem).name)
+        assertEquals("Calvin Young", (sampleList[2] as ImageItem).name)
+        assertEquals("Jeanette Reid", (sampleList[3] as ImageItem).name)
+        assertEquals("Flenn Wilson", (sampleList[4] as ImageItem).name)
+        assert(sampleList[5] is Placeholder)
+        assert(sampleList[6] is Placeholder)
+
+        positionTracker.handleItemButtonAction(positionOfItemToRemove, callback)
+
+        // AFTER
+        assertEquals("Frederick Hoffman", (sampleList[1] as ImageItem).name)
+        assertEquals("Calvin Young", (sampleList[2] as ImageItem).name)
+        assertEquals("Flenn Wilson", (sampleList[3] as ImageItem).name)
+        assert(sampleList[4] is Placeholder)
+        assert(sampleList[5] is Placeholder)
+        assert(sampleList[6] is Placeholder)
     }
 
     @Test
@@ -410,6 +468,7 @@ class ReorderItemHelperTest {
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
 
         positionTracker.init(callback)
+
         assertTrue(almostEmptyFavouriteList[2] is Placeholder)
         assertTrue(almostEmptyFavouriteList[3] is Placeholder)
         assertTrue(almostEmptyFavouriteList[4] is Placeholder)
@@ -424,8 +483,11 @@ class ReorderItemHelperTest {
         val callback = mock(ReorderItemHelper.AdapterCallback::class.java)
         positionTracker.init(callback)
 
-        positionTracker.handleItemButtonAction(4, callback)
+        val countPlaceholders = MAX_FAVOURITE - 1
+        val positionOfAddableItem = 4 + countPlaceholders
+        positionTracker.handleItemButtonAction(positionOfAddableItem, callback)
 
+        assertTrue(almostEmptyFavouriteList[2] is ImageItem)
         assertTrue(almostEmptyFavouriteList[2] is ImageItem)
         assertTrue(almostEmptyFavouriteList[3] is Placeholder)
         assertTrue(almostEmptyFavouriteList[4] is Placeholder)
@@ -445,6 +507,7 @@ class ReorderItemHelperTest {
         positionTracker.handleItemButtonAction(3, callback)
         positionTracker.handleItemButtonAction(1, callback)
 
+        assertTrue(fullFavouriteList[1] is ImageItem)
         assertTrue(fullFavouriteList[2] is ImageItem)
         assertTrue(fullFavouriteList[3] is Placeholder)
         assertTrue(fullFavouriteList[4] is Placeholder)
